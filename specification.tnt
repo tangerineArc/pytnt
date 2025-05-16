@@ -1,0 +1,233 @@
+// Your first lox program! This is how comments are done.
+
+print "Hello, world!";
+
+
+// - - - - - - - - - - - - - - BUILT-IN DATA-TYPES - - - - - - - - - - - - - - - -
+
+
+// two boolean values obviously
+
+true; // Not false
+false; // Not *not* false
+
+
+// only one kind of number: double-precision floating point
+
+1234; // an integer
+12.34; // a decimal number
+
+
+// string literals enclosed in double quotes
+
+"I am a string";
+""; // the empty string
+"123"; // this is a string, not a number
+
+
+// no value representation
+
+void;
+
+
+//  - - - - - - - - - - - - - EXPRESSIONS - - - - - - - - - - - - - - - - -
+
+
+// arithmetic
+
+a + b;
+a - b;
+a * b;
+a / b;
+
+- b;
++ b;
+
+// to-be-implemented
+a % b;
+a >> b;
+a >>> b;
+a << b;
+a ** b;
+
+// comparison and equality
+
+a < b;
+a <= b;
+a > b;
+a >= b;
+
+1 == 2; // false
+"cat" != "dog"; // true
+3.14 == "pi"; // false
+123 == "123"; // false
+
+// logical operators
+
+not true; // false
+not false; // true
+
+true and false; // false
+true and true; // true
+
+false or false; // false
+true or false; // true
+
+// precedence and grouping
+
+let average = (min + max) / 2;
+
+
+// conditional operator (might or might not implement), let's see :|
+
+
+// - - - - - - - - - - - - - - - - - - STATEMENTS - - - - - - - - - - - - - - - - - - - - - -
+
+
+// implement +=, -=, *=, /=, ++, -- later
+
+print "hello!"; // later change to a core library function
+
+// block
+{
+  print "one statement";
+  print "another one";
+}
+
+
+// - - - - - - - - - - - - - VARIABLES - - - - - - - - - - - - - - - -
+
+
+let niceVariable := "value"; // add support for 'const' later
+let emptyVar; // void
+
+let breakfast := "hypnotic drink";
+print breakfast;
+
+breakfast := "ambrosia";
+print breakfast;
+
+
+// - - - - - - - - - - - - - CONTROL FLOW - - - - - - - - - - - - - - -
+
+
+if (condition) {
+  print "yes";
+} else {
+  print "no";
+}
+
+let a := 1;
+while (a < 10) {
+  print a;
+  a := a + 1;
+}
+
+for (let i := 1; i < 10; i := i + 1) {
+  print a;
+}
+
+// to-do: add for-in loops
+
+
+// - - - - - - - - - - - - - FUNCTIONS - - - - - - - - - - - - - - - - -
+
+
+// functions are first-class citizens
+
+makeInterpreter(sourceCode, magic); // function call
+makeSourceCode();
+
+// defining a function
+function printSum(a, b) { // returns void
+  print a + b;
+}
+
+function returnSum(a, b) {
+  return a + b;
+}
+
+// closures
+
+function addPair(a, b) {
+  return a + b;
+}
+
+function identity(a) {
+  return a;
+}
+
+print identity(addPair)(1, 2); // prints 3
+
+function outerFunction() {
+  function innerFunction() {
+    print "local guy";
+  }
+
+  innerFunction();
+}
+
+function returnFunction() {
+  let outside := "outside";
+
+  function inner() {
+    print outside;
+  }
+
+  return inner;
+}
+
+let fn := returnFunction();
+fn();
+
+
+// - - - - - - - - - - - - - CLASSES - - - - - - - - - - - - - - - -
+
+
+// classes are first-class citizens as well
+
+class Death {
+  // optional initializer
+  construct(target, cause) {
+    this.target = target;
+    this.cause = cause;
+  }
+
+  cookPotion() {
+    print "We need a lizard first!";
+  }
+
+  serve(greeting) {
+    print greeting + this.target + "!";
+  }
+}
+
+let yourDeath = new Death("Zeus", "lightning");
+yourDeath.serve("Enjoy your death "); // prints: Enjoy your death Zeus!
+yourDeath.killer = "Ares"; // add additional properties
+
+// inheritance
+
+class Life <- Death { // life inherits from death
+  construct(deathTarget, deathCause, lifeSpan) {
+    super.construct(deathTarget, deathCause);
+    this.lifeSpan = lifeSpan;
+  }
+
+  live() {
+    print "I don't want to live " + this.lifeSpan + "years!";
+  }
+}
+
+let myLife = new Life("not me please", "idk", 700);
+myLife.serve("You can kill, but ");
+myLife.live();
+
+// for now primitive types are not instances of classes ... fix that later
+
+
+// - - - - - - - - - - - - - - CORE - - - - - - - - - - - - - - - -
+
+// pretty bare-bones for now ... it has nothing except: print, clock()
+// we have to add tons of useful functions
+
