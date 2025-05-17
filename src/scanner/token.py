@@ -1,5 +1,5 @@
 from scanner.tokentype import TokenType
-from typing import Optional
+from typing import Optional, Union
 
 
 class Token:
@@ -7,7 +7,7 @@ class Token:
     self,
     token_type: TokenType,
     lexeme: str,
-    literal: Optional[str],
+    literal: Optional[Union[str, float]],
     line: int
   ):
     self.type = token_type
