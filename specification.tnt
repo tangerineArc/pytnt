@@ -64,8 +64,8 @@ a >= b;
 
 // logical operators
 
-not true; // false
-not false; // true
+!true; // false
+!false; // true
 
 true and false; // false
 true and true; // true
@@ -78,7 +78,7 @@ true or false; // true
 let average = (min + max) / 2;
 
 
-// conditional operator (might or might not implement), let's see :|
+// conditional operator (might or might not implement), let's see ?:
 
 
 // - - - - - - - - - - - - - - - - - - STATEMENTS - - - - - - - - - - - - - - - - - - - - - -

@@ -1,5 +1,6 @@
-from scanner import Scanner
+from scanner.scanner import Scanner
 from sys import argv, exit
+
 
 class Thanatos:
   def __init__(self):
