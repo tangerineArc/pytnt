@@ -28,12 +28,15 @@ class Thanatos:
 
   @staticmethod
   def _run_repl():
+    prompt_color = "\033[38;2;184;146;255m"
     while True:
-      line = input("> ")
-      if line == "": break
-
-      Thanatos._run(line)
-      Logger.encountered_error = False
+      try:
+        line = input(f"{prompt_color}tnt ϟ \033[0m")
+        Thanatos._run(line)
+        Logger.encountered_error = False
+      except KeyboardInterrupt:
+        print()
+        break
 
   @staticmethod
   def _run(source: str):
