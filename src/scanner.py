@@ -1,6 +1,0 @@
-class Scanner:
-  def __init__(self, source: str):
-    ...
-
-  def scan_tokens(self):
-    ...
