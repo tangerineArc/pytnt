@@ -1,4 +1,5 @@
 from logger.logger import Logger
+from logger.repl import Repl
 from scanner.scanner import Scanner
 from sys import argv, exit
 
@@ -28,10 +29,11 @@ class Thanatos:
 
   @staticmethod
   def _run_repl():
-    prompt_color = "\033[38;2;184;146;255m"
+    repl = Repl((184, 146, 255), "tnt ϟ")
+
     while True:
       try:
-        line = input(f"{prompt_color}tnt ϟ \033[0m")
+        line = repl.prompt()
         Thanatos._run(line)
         Logger.encountered_error = False
       except KeyboardInterrupt:
