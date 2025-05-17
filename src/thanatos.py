@@ -1,4 +1,5 @@
 from scanner.scanner import Scanner
+
 from sys import argv, exit
 
 
