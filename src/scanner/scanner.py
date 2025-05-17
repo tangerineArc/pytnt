@@ -85,6 +85,8 @@ class Scanner:
       case _:
         if self._is_digit(char):
           self._scan_number()
+        elif self._is_alpha(char):
+          self._scan_identifier()
         else:
           Logger.error(self.line, f"Unexpected character {char}.")
 
@@ -123,9 +125,6 @@ class Scanner:
     value = self.source[self.start + 1 : self.current - 1]
     self.add_token(TokenType.STRING, value)
 
-  def _is_digit(self, char: str) -> bool:
-    return char >= "0" and char <= "9"
-
   def _scan_number(self):
     while self._is_digit(self._peek()):
       self._advance()
@@ -139,6 +138,14 @@ class Scanner:
       TokenType.NUMBER, float(self.source[self.start : self.current])
     )
 
+  def _scan_identifier(self):
+    while self._is_alpha_numeric(self._peek()):
+      self._advance()
+
+    text = self.source[self.start : self.current]
+
+    self.add_token(TokenType.key_words(text) or TokenType.IDENTIFIER)
+
   def _peek(self) -> str:
     if self._is_at_end():
       return "\0"
@@ -149,3 +156,16 @@ class Scanner:
       return '\0'
 
     return self.source[self.current + 1]
+
+  def _is_digit(self, char: str) -> bool:
+    return char >= "0" and char <= "9"
+
+  def _is_alpha(self, char: str) -> bool:
+    return (
+      (char >= "A" and char <= "Z") or
+      (char >= "a" and char <= "z") or
+      (char == "_")
+    )
+
+  def _is_alpha_numeric(self, char: str) -> bool:
+    return self._is_alpha(char) or self._is_digit(char)

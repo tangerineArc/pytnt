@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 
 class TokenType(Enum):
@@ -18,7 +19,7 @@ class TokenType(Enum):
   # one or two-character tokens
   BANG = "!"
   BANG_EQUAL = "!="
-  COLON_EQUAL = ":="
+  EQUAL = "="
   EQUAL_EQUAL = "=="
   GREATER = ">"
   GREATER_EQUAL = ">="
@@ -51,3 +52,26 @@ class TokenType(Enum):
   EOF = "eof"
 
   # to-do: new, construct, <-
+
+  @staticmethod
+  def key_words(key: str) -> Optional["TokenType"]:
+    reserved_words = {
+      "and": TokenType.AND,
+      "class": TokenType.CLASS,
+      "else": TokenType.ELSE,
+      "false": TokenType.FALSE,
+      "for": TokenType.FOR,
+      "function": TokenType.FUNCTION,
+      "if": TokenType.IF,
+      "let": TokenType.LET,
+      "or": TokenType.OR,
+      "print": TokenType.PRINT,
+      "return": TokenType.RETURN,
+      "super": TokenType.SUPER,
+      "this": TokenType.THIS,
+      "true": TokenType.TRUE,
+      "void": TokenType.VOID,
+      "while": TokenType.WHILE,
+    }
+
+    return reserved_words.get(key, None)
