@@ -1,18 +1,17 @@
+from logger.logger import Logger
 from scanner.scanner import Scanner
 from sys import argv, exit
 
 
 class Thanatos:
-  _had_error = False
-
   @staticmethod
   def main():
-    if len(argv) > 1:
+    if len(argv) > 2:
       print("Usage: thanatos [script]")
       exit(64)
 
-    if len(argv) == 1:
-      Thanatos._run_file(argv[0])
+    if len(argv) == 2:
+      Thanatos._run_file(argv[1])
     else:
       Thanatos._run_repl()
 
@@ -24,7 +23,7 @@ class Thanatos:
 
     Thanatos._run(file_contents)
 
-    if Thanatos._had_error:
+    if Logger.encountered_error:
       exit(65)
 
   @staticmethod
@@ -34,7 +33,7 @@ class Thanatos:
       if line == "": break
 
       Thanatos._run(line)
-      Thanatos._had_error = False
+      Logger.encountered_error = False
 
   @staticmethod
   def _run(source: str):
@@ -43,16 +42,6 @@ class Thanatos:
 
     for token in tokens:
       print(token)
-
-  # implement better error handling later
-  @staticmethod
-  def error(line: int, message: str):
-    Thanatos._report(line, "", message)
-
-  @staticmethod
-  def _report(line: int, where: str, message: str):
-    print(f"[line {line}] Error {where}: {message}")
-    Thanatos._had_error = True
 
 
 if __name__ == "__main__":
