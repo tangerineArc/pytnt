@@ -1,4 +1,5 @@
 // Your first lox program! This is how comments are done.
+// to-do: add support fot /* block comments */
 
 print "Hello, world!";
 
