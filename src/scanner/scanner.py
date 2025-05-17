@@ -1,7 +1,7 @@
 from logger.logger import Logger
 from scanner.token import Token
 from scanner.tokentype import TokenType
-from typing import List
+from typing import List, Optional, Union
 
 
 class Scanner:
@@ -72,6 +72,8 @@ class Scanner:
             self._advance()
         else:
           self.add_token(TokenType.SLASH)
+      case "\"":
+        self._scan_string()
       case " ":
         pass
       case "\r":
@@ -81,17 +83,21 @@ class Scanner:
       case "\n":
         self.line += 1
       case _:
-        Logger.error(self.line, f"Unexpected character {char}.")
+        if self._is_digit(char):
+          self._scan_number()
+        else:
+          Logger.error(self.line, f"Unexpected character {char}.")
 
   def _advance(self) -> str:
     char = self.source[self.current]
     self.current += 1
     return char
 
-  def add_token(self, token_type: TokenType):
+  def add_token(
+    self, token_type: TokenType, literal: Optional[Union[str, float]] = None
+  ):
     lexeme = self.source[self.start : self.current]
-    # overload literal
-    self.tokens.append(Token(token_type, lexeme, None, self.line))
+    self.tokens.append(Token(token_type, lexeme, literal, self.line))
 
   def _match(self, expected: str) -> bool:
     if self._is_at_end():
@@ -102,7 +108,44 @@ class Scanner:
     self.current += 1
     return True
 
+  def _scan_string(self):
+    while self._peek() != '\"' and not self._is_at_end():
+      if self._peek() == "\n":
+        self.line += 1
+      self._advance()
+
+    if self._is_at_end():
+      Logger.error(self.line, "Unterminated string.")
+      return
+
+    self._advance() # consume the closing "
+
+    value = self.source[self.start + 1 : self.current - 1]
+    self.add_token(TokenType.STRING, value)
+
+  def _is_digit(self, char: str) -> bool:
+    return char >= "0" and char <= "9"
+
+  def _scan_number(self):
+    while self._is_digit(self._peek()):
+      self._advance()
+
+    if self._peek() == "." and self._is_digit(self._peek_next()):
+      self._advance()
+      while self._is_digit(self._peek()):
+        self._advance()
+
+    self.add_token(
+      TokenType.NUMBER, float(self.source[self.start : self.current])
+    )
+
   def _peek(self) -> str:
     if self._is_at_end():
       return "\0"
     return self.source[self.current]
+
+  def _peek_next(self) -> str:
+    if self.current + 1 >= len(self.source):
+      return '\0'
+
+    return self.source[self.current + 1]
