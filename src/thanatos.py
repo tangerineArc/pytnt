@@ -1,5 +1,7 @@
+from grammar.astprinter import AstPrinter
 from logger.logger import Logger
 from logger.repl import Repl
+from parser.parser import Parser
 from scanner.scanner import Scanner
 from sys import argv, exit
 
@@ -43,8 +45,14 @@ def run(source: str):
   scanner = Scanner(source)
   tokens = scanner.scan_tokens()
 
-  for token in tokens:
-    print(token)
+  parser = Parser(tokens)
+  expression = parser.parse()
+
+  if Logger.encountered_error or expression is None:
+    return
+
+  printer = AstPrinter()
+  print(printer.log(expression))
 
 
 if __name__ == "__main__":
