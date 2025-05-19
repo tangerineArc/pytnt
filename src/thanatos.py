@@ -1,9 +1,9 @@
-from grammar.astprinter import AstPrinter
 from logger.logger import Logger
 from logger.repl import Repl
 from parser.parser import Parser
 from scanner.scanner import Scanner
 from sys import argv, exit
+from tools.astprinter import AstPrinter
 
 
 def main():
