@@ -1,22 +1,7 @@
 from grammar.expr import Binary, Expr, Grouping, Literal, Unary, Visitor
-# from scanner.token import Token
-# from scanner.tokentype import TokenType
 
 
 class AstPrinter(Visitor[str]):
-  # @staticmethod
-  # def main(): # to be removed
-  #   expression = Binary(
-  #     Unary(
-  #       Token(TokenType.PLUS, "+", None, 1),
-  #       Literal(123)
-  #     ),
-  #     Token(TokenType.STAR, "*", None, 1),
-  #     Grouping(Literal(45.67))
-  #   )
-  #   p = AstPrinter()
-  #   print(p.log(expression))
-
   def log(self, expr: Expr) -> str:
     return expr.accept(self)
 
@@ -31,6 +16,10 @@ class AstPrinter(Visitor[str]):
   def visit_literal_expr(self, expr: Literal) -> str:
     if expr.value == None:
       return "void"
+    if str(expr.value) == "True":
+      return "true"
+    if str(expr.value) == "False":
+      return "false"
 
     return str(expr.value)
 
