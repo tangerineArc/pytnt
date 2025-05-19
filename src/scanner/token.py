@@ -15,7 +15,7 @@ class Token:
     self.literal = literal # change datatype to object later
     self.line = line
 
-  def to_string(self):
+  def to_string(self): # remove this method
     return f"{self.type} {self.lexeme} {self.literal}"
 
   def __repr__(self):
