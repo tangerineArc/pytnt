@@ -1,5 +1,5 @@
 from logger.logger import Logger
-from grammar.expr import Binary, Expr, Grouping, Literal, Unary
+from parser.expr import Binary, Expr, Grouping, Literal, Unary
 from scanner.token import Token
 from scanner.tokentype import TokenType
 from typing import List, Optional

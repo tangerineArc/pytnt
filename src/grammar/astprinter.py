@@ -1,4 +1,4 @@
-from grammar.expr import Binary, Expr, Grouping, Literal, Unary, Visitor
+from parser.expr import Binary, Expr, Grouping, Literal, Unary, Visitor
 
 
 class AstPrinter(Visitor[str]):
