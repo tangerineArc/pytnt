@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from scanner.token import Token
-from typing import Literal as Oneof, Optional, Protocol, TypeVar, Union
+from typing import Protocol, TypeVar, Union
 
 
 ReturnType = TypeVar("ReturnType", covariant = True)
@@ -38,10 +38,7 @@ class Grouping(Expr):
 
 
 class Literal(Expr):
-  def __init__(
-    self,
-    value: Optional[Union[str, float, Oneof["true", "false", "void"]]]
-  ):
+  def __init__(self, value: Union[str, float, bool, None]):
     self.value = value
 
   def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
