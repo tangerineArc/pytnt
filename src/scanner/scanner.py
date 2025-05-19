@@ -12,6 +12,7 @@ class Scanner:
     self.start = 0
     self.line = 1
 
+
   def scan_tokens(self) -> List[Token]:
     while not self._is_at_end():
       self.start = self.current
@@ -20,8 +21,10 @@ class Scanner:
     self.tokens.append(Token(TokenType.EOF, "", None, self.line))
     return self.tokens
 
+
   def _is_at_end(self):
     return self.current >= len(self.source)
+
 
   def scan_token(self):
     char = self._advance()
@@ -90,16 +93,19 @@ class Scanner:
         else:
           Logger.error(self.line, f"Unexpected character {char}.")
 
+
   def _advance(self) -> str:
     char = self.source[self.current]
     self.current += 1
     return char
+
 
   def add_token(
     self, token_type: TokenType, literal: Optional[Union[str, float]] = None
   ):
     lexeme = self.source[self.start : self.current]
     self.tokens.append(Token(token_type, lexeme, literal, self.line))
+
 
   def _match(self, expected: str) -> bool:
     if self._is_at_end():
@@ -109,6 +115,7 @@ class Scanner:
 
     self.current += 1
     return True
+
 
   def _scan_string(self):
     while self._peek() != '\"' and not self._is_at_end():
@@ -125,6 +132,7 @@ class Scanner:
     value = self.source[self.start + 1 : self.current - 1]
     self.add_token(TokenType.STRING, value)
 
+
   def _scan_number(self):
     while self._is_digit(self._peek()):
       self._advance()
@@ -138,6 +146,7 @@ class Scanner:
       TokenType.NUMBER, float(self.source[self.start : self.current])
     )
 
+
   def _scan_identifier(self):
     while self._is_alpha_numeric(self._peek()):
       self._advance()
@@ -146,10 +155,12 @@ class Scanner:
 
     self.add_token(TokenType.key_words(text) or TokenType.IDENTIFIER)
 
+
   def _peek(self) -> str:
     if self._is_at_end():
       return "\0"
     return self.source[self.current]
+
 
   def _peek_next(self) -> str:
     if self.current + 1 >= len(self.source):
@@ -157,8 +168,10 @@ class Scanner:
 
     return self.source[self.current + 1]
 
+
   def _is_digit(self, char: str) -> bool:
     return char >= "0" and char <= "9"
+
 
   def _is_alpha(self, char: str) -> bool:
     return (
@@ -166,6 +179,7 @@ class Scanner:
       (char >= "a" and char <= "z") or
       (char == "_")
     )
+
 
   def _is_alpha_numeric(self, char: str) -> bool:
     return self._is_alpha(char) or self._is_digit(char)
