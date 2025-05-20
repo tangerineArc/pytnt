@@ -1,9 +1,13 @@
+from interpreter.interpreter import Interpreter
 from logger.logger import Logger
 from logger.repl import Repl
 from parser.parser import Parser
 from scanner.scanner import Scanner
 from sys import argv, exit
-from tools.astprinter import AstPrinter
+# from tools.astprinter import AstPrinter
+
+
+interpreter = Interpreter()
 
 
 def main():
@@ -26,6 +30,8 @@ def run_file(path: str):
 
   if Logger.encountered_error:
     exit(65)
+  if Logger.encountered_runtime_error:
+    exit(70)
 
 
 def run_repl():
@@ -51,8 +57,7 @@ def run(source: str):
   if Logger.encountered_error or expression is None:
     return
 
-  printer = AstPrinter()
-  print(printer.log(expression))
+  interpreter.interpret(expression)
 
 
 if __name__ == "__main__":
