@@ -44,6 +44,8 @@ a - b;
 a * b;
 a / b;
 
+// to-do: handle errors caused by division by zero
+
 - b;
 + b;
 
@@ -60,6 +62,7 @@ a .. b; // range operator to generate all integers between a and b
 // support more bitwise operations
 
 // comparison and equality
+// to-do: implement string comparison
 
 a < b;
 a <= b;
