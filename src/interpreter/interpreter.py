@@ -1,18 +1,28 @@
 from errors.executionerror import ExecutionError
 from logger.logger import Logger
-from parser.expr import Binary, Expr, Grouping, Literal, Unary, Visitor
+from parser.expr import Binary, Expr, Grouping, Literal, Unary, Visitor as ExprVisitor
+from parser.stmt import Expression, Print, Stmt, Visitor as StmtVisitor
 from scanner.token import Token
 from scanner.tokentype import TokenType
-from typing import Any
+from typing import Any, List
 
 
-class Interpreter(Visitor[Any]):
-  def interpret(self, expression: Expr):
+class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
+  def interpret(self, statements: List[Stmt]):
     try:
-      value = self._evaluate(expression)
-      print(self._stringify(value))
+      for statement in statements:
+        self._execute(statement)
     except ExecutionError as e:
       Logger.execution_error(e)
+
+
+  def visit_expression_stmt(self, stmt: Expression):
+    self._evaluate(stmt.expression)
+
+
+  def visit_print_stmt(self, stmt: Print):
+    value = self._evaluate(stmt.expression)
+    print(self._stringify(value))
 
 
   def visit_literal_expr(self, expr: Literal) -> Any:
@@ -92,6 +102,10 @@ class Interpreter(Visitor[Any]):
 
       case _: # unreachable
         return
+
+
+  def _execute(self, stmt: Stmt):
+    stmt.accept(self)
 
 
   def _evaluate(self, expr: Expr) -> Any:
