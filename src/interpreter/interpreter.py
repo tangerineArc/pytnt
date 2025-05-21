@@ -5,7 +5,7 @@ from parser.expr import (
   Assign, Binary, Expr, Grouping, Literal, Unary, Variable, Visitor as ExprVisitor
 )
 from parser.stmt import (
-  Block, Expression, Let, Print, Stmt, Visitor as StmtVisitor
+  Block, Expression, If, Let, Print, Stmt, Visitor as StmtVisitor
 )
 from scanner.token import Token
 from scanner.tokentype import TokenType
@@ -27,6 +27,13 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
 
   def visit_expression_stmt(self, stmt: Expression):
     self._evaluate(stmt.expression)
+
+
+  def visit_if_stmt(self, stmt: If):
+    if self._is_truthy(self._evaluate(stmt.condition)):
+      self._execute(stmt.then_branch)
+    elif stmt.else_branch != None:
+      self._execute(stmt.else_branch)
 
 
   def visit_print_stmt(self, stmt: Print):
