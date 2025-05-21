@@ -1,13 +1,22 @@
+from interpreter.environment import Environment
 from errors.executionerror import ExecutionError
 from logger.logger import Logger
-from parser.expr import Binary, Expr, Grouping, Literal, Unary, Visitor as ExprVisitor
-from parser.stmt import Expression, Print, Stmt, Visitor as StmtVisitor
+from parser.expr import (
+  Assign, Binary, Expr, Grouping, Literal, Unary, Variable, Visitor as ExprVisitor
+)
+from parser.stmt import (
+  Block, Expression, Let, Print, Stmt, Visitor as StmtVisitor
+)
 from scanner.token import Token
 from scanner.tokentype import TokenType
 from typing import Any, List
 
 
 class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
+  def __init__(self):
+    self.environment = Environment()
+
+
   def interpret(self, statements: List[Stmt]):
     try:
       for statement in statements:
@@ -23,6 +32,29 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   def visit_print_stmt(self, stmt: Print):
     value = self._evaluate(stmt.expression)
     print(self._stringify(value))
+
+
+  def visit_block_stmt(self, stmt: Block):
+    self._execute_block(stmt.statements, Environment(self.environment))
+
+
+  def visit_let_stmt(self, stmt: Let):
+    value = None
+    if stmt.initializer != None:
+      value = self._evaluate(stmt.initializer)
+
+    self.environment.define(stmt.name.lexeme, value)
+
+
+  def visit_variable_expr(self, expr: Variable) -> Any:
+    return self.environment.get(expr.name)
+
+
+  def visit_assign_expr(self, expr: Assign) -> Any:
+    value = self._evaluate(expr.value)
+    self.environment.assign(expr.name, value)
+
+    return value
 
 
   def visit_literal_expr(self, expr: Literal) -> Any:
@@ -106,6 +138,18 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
 
   def _execute(self, stmt: Stmt):
     stmt.accept(self)
+
+
+  def _execute_block(self, statements: List[Stmt], environment: Environment):
+    previous = self.environment
+
+    try:
+      self.environment = environment
+
+      for statement in statements:
+        self._execute(statement)
+    finally:
+      self.environment = previous
 
 
   def _evaluate(self, expr: Expr) -> Any:
