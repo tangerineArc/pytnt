@@ -29,7 +29,12 @@ operator    -> "==" | "!=" | "<" | "<=" | ">" | ">="
 // precedence increases downwards
 // each rule matches expressions at its precedence level or higher
 
-program       -> statement* EOF ;
+program       -> declaration* EOF ;
+
+declaration   -> varDecl
+              |  statement ;
+
+varDecl       -> "let" IDENTIFIER ( "=" expression )? ";" ;
 
 statement     -> exprStmt
               |  printStmt ;
@@ -38,7 +43,10 @@ exprStmt      -> expression ";" ;
 
 printStmt     -> "print" expression ";" ;
 
-expression    -> equality ;
+expression    -> assignment ;
+
+assignment    -> IDENTIFIER "=" assignment
+              |  equality ;
 
 equality      -> comparison ( ( "!=" | "==" ) comparison )* ;
 
@@ -51,5 +59,7 @@ factor        -> unary ( ( "/" | "*" ) unary )* ;
 unary         -> ( "+" | "-" | "!" ) unary
               |  primary ;
 
-primary       -> NUMBER | STRING | "true" | "false" | "void"
-              |  "(" expression ")" ;
+primary       -> "true" | "false" | "void"
+              |  NUMBER | STRING
+              |  "(" expression ")"
+              |  IDENTIFIER ;
