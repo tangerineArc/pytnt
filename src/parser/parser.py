@@ -1,8 +1,9 @@
 from logger.logger import Logger
 from parser.expr import Binary, Expr, Grouping, Literal, Unary
+from parser.stmt import Expression, Print, Stmt
 from scanner.token import Token
 from scanner.tokentype import TokenType
-from typing import List, Optional
+from typing import List
 
 
 class Parser:
@@ -11,11 +12,31 @@ class Parser:
     self.current = 0
 
 
-  def parse(self) -> Optional[Expr]:
-    try:
-      return self.expression()
-    except ParseError:
-      return None
+  def parse(self) -> List[Stmt]:
+    statements: List[Stmt] = []
+    while not self.is_at_end():
+      statements.append(self.statement())
+
+    return statements
+
+
+  def statement(self) -> Stmt:
+    if self.match(TokenType.PRINT):
+      return self._print_statement()
+
+    return self._expression_statement()
+
+
+  def _print_statement(self) -> Stmt:
+    value = self.expression()
+    self.consume(TokenType.SEMICOLON, "Expect ';' after value.")
+    return Print(value)
+
+
+  def _expression_statement(self) -> Stmt:
+    expr = self.expression()
+    self.consume(TokenType.SEMICOLON, "Expect ';' after expression.")
+    return Expression(expr)
 
 
   def expression(self) -> Expr:
