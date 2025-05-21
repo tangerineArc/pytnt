@@ -2,7 +2,7 @@ from logger.logger import Logger
 from parser.expr import (
   Assign, Binary, Expr, Grouping, Literal, Logical, Unary, Variable
 )
-from parser.stmt import Block, Expression, If, Let, Print, Stmt
+from parser.stmt import Block, Expression, If, Let, Print, Stmt, While
 from scanner.token import Token
 from scanner.tokentype import TokenType
 from typing import List
@@ -58,6 +58,9 @@ class Parser:
     if self.match(TokenType.PRINT):
       return self._print_statement()
 
+    if self.match(TokenType.WHILE):
+      return self._while_statement()
+
     if self.match(TokenType.LEFT_BRACE):
       return Block(self.block())
 
@@ -84,6 +87,15 @@ class Parser:
     value = self.expression()
     self.consume(TokenType.SEMICOLON, "Expect ';' after value.")
     return Print(value)
+
+
+  def _while_statement(self) -> Stmt:
+    self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.")
+    condition = self.expression()
+    self.consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.")
+    body = self.statement()
+
+    return While(condition, body)
 
 
   def _expression_statement(self) -> Stmt:
