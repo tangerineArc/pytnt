@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from parser.expr import Expr
 from scanner.token import Token
-from typing import Optional, Protocol, TypeVar
+from typing import List, Optional, Protocol, TypeVar
 
 
 ReturnType = TypeVar("ReturnType", covariant = True)
@@ -17,6 +17,7 @@ class Visitor(Protocol[ReturnType]):
   def visit_expression_stmt(self, stmt: "Expression") -> ReturnType: ...
   def visit_print_stmt(self, stmt: "Print") -> ReturnType: ...
   def visit_let_stmt(self, stmt: "Let") -> ReturnType: ...
+  def visit_block_stmt(self, stmt: "Block") -> ReturnType: ...
 
 
 class Expression(Stmt):
@@ -42,3 +43,11 @@ class Let(Stmt):
 
   def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
     return visitor.visit_let_stmt(self)
+
+
+class Block(Stmt):
+  def __init__(self, statements: List[Stmt]):
+    self.statements = statements
+
+  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
+    return visitor.visit_block_stmt(self)
