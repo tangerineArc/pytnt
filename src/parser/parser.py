@@ -1,6 +1,8 @@
 from logger.logger import Logger
-from parser.expr import Binary, Expr, Grouping, Literal, Unary
-from parser.stmt import Expression, Print, Stmt
+from parser.expr import (
+  Assign, Binary, Expr, Grouping, Literal, Unary, Variable
+)
+from parser.stmt import Expression, Let, Print, Stmt
 from scanner.token import Token
 from scanner.tokentype import TokenType
 from typing import List
@@ -15,9 +17,32 @@ class Parser:
   def parse(self) -> List[Stmt]:
     statements: List[Stmt] = []
     while not self.is_at_end():
-      statements.append(self.statement())
+      statements.append(self.declaration())
 
     return statements
+
+
+  def declaration(self) -> Stmt:
+    try:
+      if self.match(TokenType.LET):
+        return self._var_declaration()
+
+      return self.statement()
+    except ParseError:
+      self.synchronize()
+      ... # return something
+
+
+  def _var_declaration(self) -> Stmt:
+    name = self.consume(TokenType.IDENTIFIER, "Expect variable name.")
+
+    initializer = None
+    if self.match(TokenType.EQUAL):
+      initializer = self.expression()
+
+    self.consume(TokenType.SEMICOLON, "Expect ';' after variable declaration")
+
+    return Let(name, initializer)
 
 
   def statement(self) -> Stmt:
@@ -40,7 +65,24 @@ class Parser:
 
 
   def expression(self) -> Expr:
-    return self.equality()
+    return self.assignment()
+
+
+  def assignment(self) -> Expr:
+    expr = self.equality()
+
+    if self.match(TokenType.EQUAL):
+      equals = self.previous()
+      value = self.assignment()
+
+      if isinstance(expr, Variable):
+        name = expr.name
+        return Assign(name, value)
+
+      Logger.error(equals, "Invalid assignment target.")
+      # raise ParseError() no throwing errors here
+
+    return expr
 
 
   def equality(self) -> Expr:
@@ -110,13 +152,16 @@ class Parser:
     if self.match(TokenType.NUMBER, TokenType.STRING):
       return Literal(self.previous().literal)
 
+    if self.match(TokenType.IDENTIFIER):
+      return Variable(self.previous())
+
     if self.match(TokenType.LEFT_PAREN):
       expr = self.expression()
       self.consume(TokenType.RIGHT_PAREN, "Expect ')' after expression")
       return Grouping(expr)
 
     Logger.error(self.peek(), "Expect expression.")
-    raise ParseError()
+    raise ParseError
 
 
   def synchronize(self):
@@ -189,7 +234,7 @@ class Parser:
       return self.advance()
 
     Logger.error(self.peek(), message)
-    raise ParseError()
+    raise ParseError
 
 
 class ParseError(RuntimeError):
