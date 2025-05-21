@@ -5,7 +5,7 @@ from parser.expr import (
   Assign, Binary, Expr, Grouping, Literal, Logical, Unary, Variable, Visitor as ExprVisitor
 )
 from parser.stmt import (
-  Block, Expression, If, Let, Print, Stmt, Visitor as StmtVisitor
+  Block, Expression, If, Let, Print, Stmt, Visitor as StmtVisitor, While
 )
 from scanner.token import Token
 from scanner.tokentype import TokenType
@@ -51,6 +51,11 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
       value = self._evaluate(stmt.initializer)
 
     self.environment.define(stmt.name.lexeme, value)
+
+
+  def visit_while_stmt(self, stmt: While):
+    while self._is_truthy(self._evaluate(stmt.condition)):
+      self._execute(stmt.body)
 
 
   def visit_variable_expr(self, expr: Variable) -> Any:
