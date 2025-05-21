@@ -19,6 +19,7 @@ class Visitor(Protocol[ReturnType]):
   def visit_unary_expr(self, expr: "Unary") -> ReturnType: ...
   def visit_variable_expr(self, expr: "Variable") -> ReturnType: ...
   def visit_assign_expr(self, expr: "Assign") -> ReturnType: ...
+  def visit_logical_expr(self, expr: "Logical") -> ReturnType: ...
 
 
 class Binary(Expr):
@@ -45,6 +46,16 @@ class Literal(Expr):
 
   def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
     return visitor.visit_literal_expr(self)
+
+
+class Logical(Expr):
+  def __init__(self, left: Expr, operator: Token, right: Expr):
+    self.left = left
+    self.operator = operator
+    self.right = right
+
+  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
+    return visitor.visit_logical_expr(self)
 
 
 class Unary(Expr):
