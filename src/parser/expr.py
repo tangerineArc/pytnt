@@ -17,6 +17,8 @@ class Visitor(Protocol[ReturnType]):
   def visit_grouping_expr(self, expr: "Grouping") -> ReturnType: ...
   def visit_literal_expr(self, expr: "Literal") -> ReturnType: ...
   def visit_unary_expr(self, expr: "Unary") -> ReturnType: ...
+  def visit_variable_expr(self, expr: "Variable") -> ReturnType: ...
+  def visit_assign_expr(self, expr: "Assign") -> ReturnType: ...
 
 
 class Binary(Expr):
@@ -52,3 +54,20 @@ class Unary(Expr):
 
   def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
     return visitor.visit_unary_expr(self)
+
+
+class Variable(Expr):
+  def __init__(self, name: Token):
+    self.name = name
+
+  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
+    return visitor.visit_variable_expr(self)
+
+
+class Assign(Expr):
+  def __init__(self, name: Token, value: Expr):
+    self.name = name
+    self.value = value
+
+  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
+    return visitor.visit_assign_expr(self)
