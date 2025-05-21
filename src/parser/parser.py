@@ -2,7 +2,7 @@ from logger.logger import Logger
 from parser.expr import (
   Assign, Binary, Expr, Grouping, Literal, Unary, Variable
 )
-from parser.stmt import Block, Expression, Let, Print, Stmt
+from parser.stmt import Block, Expression, If, Let, Print, Stmt
 from scanner.token import Token
 from scanner.tokentype import TokenType
 from typing import List
@@ -34,18 +34,27 @@ class Parser:
 
 
   def _var_declaration(self) -> Stmt:
-    name = self.consume(TokenType.IDENTIFIER, "Expect variable name.")
+    name = self.consume(
+      TokenType.IDENTIFIER,
+      "Expect variable name."
+    )
 
     initializer = None
     if self.match(TokenType.EQUAL):
       initializer = self.expression()
 
-    self.consume(TokenType.SEMICOLON, "Expect ';' after variable declaration")
+    self.consume(
+      TokenType.SEMICOLON,
+      "Expect ';' after variable declaration"
+    )
 
     return Let(name, initializer)
 
 
   def statement(self) -> Stmt:
+    if self.match(TokenType.IF):
+      return self._if_statement()
+
     if self.match(TokenType.PRINT):
       return self._print_statement()
 
@@ -53,6 +62,22 @@ class Parser:
       return Block(self.block())
 
     return self._expression_statement()
+
+
+  def _if_statement(self) -> Stmt:
+    self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
+    condition = self.expression()
+    self.consume(
+      TokenType.RIGHT_PAREN,
+      "Expect ')' after 'if' condition."
+    )
+
+    then_branch = self.statement()
+    else_branch = None
+    if self.match(TokenType.ELSE):
+      else_branch = self.statement()
+
+    return If(condition, then_branch, else_branch)
 
 
   def _print_statement(self) -> Stmt:
