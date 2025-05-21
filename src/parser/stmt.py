@@ -18,6 +18,7 @@ class Visitor(Protocol[ReturnType]):
   def visit_print_stmt(self, stmt: "Print") -> ReturnType: ...
   def visit_let_stmt(self, stmt: "Let") -> ReturnType: ...
   def visit_block_stmt(self, stmt: "Block") -> ReturnType: ...
+  def visit_if_stmt(self, stmt: "If") -> ReturnType: ...
 
 
 class Expression(Stmt):
@@ -51,3 +52,15 @@ class Block(Stmt):
 
   def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
     return visitor.visit_block_stmt(self)
+
+
+class If(Stmt):
+  def __init__(
+    self, condition: Expr, then_branch: Stmt, else_branch: Optional[Stmt]
+  ):
+    self.condition = condition
+    self.then_branch = then_branch
+    self.else_branch = else_branch
+
+  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
+    return visitor.visit_if_stmt(self)
