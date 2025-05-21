@@ -1,6 +1,6 @@
 from logger.logger import Logger
 from parser.expr import (
-  Assign, Binary, Expr, Grouping, Literal, Unary, Variable
+  Assign, Binary, Expr, Grouping, Literal, Logical, Unary, Variable
 )
 from parser.stmt import Block, Expression, If, Let, Print, Stmt
 from scanner.token import Token
@@ -107,7 +107,7 @@ class Parser:
 
 
   def assignment(self) -> Expr:
-    expr = self.equality()
+    expr = self._or()
 
     if self.match(TokenType.EQUAL):
       equals = self.previous()
@@ -119,6 +119,28 @@ class Parser:
 
       Logger.error(equals, "Invalid assignment target.")
       # raise ParseError() no throwing errors here
+
+    return expr
+
+
+  def _or(self) -> Expr:
+    expr = self._and()
+
+    while self.match(TokenType.OR):
+      operator = self.previous()
+      right = self._and()
+      expr = Logical(expr, operator, right)
+
+    return expr
+
+
+  def _and(self) -> Expr:
+    expr = self.equality()
+
+    while self.match(TokenType.AND):
+      operator = self.previous()
+      right = self.equality()
+      expr = Logical(expr, operator, right)
 
     return expr
 
