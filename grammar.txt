@@ -29,6 +29,15 @@ operator    -> "==" | "!=" | "<" | "<=" | ">" | ">="
 // precedence increases downwards
 // each rule matches expressions at its precedence level or higher
 
+program       -> statement* EOF ;
+
+statement     -> exprStmt
+              |  printStmt ;
+
+exprStmt      -> expression ";" ;
+
+printStmt     -> "print" expression ";" ;
+
 expression    -> equality ;
 
 equality      -> comparison ( ( "!=" | "==" ) comparison )* ;
