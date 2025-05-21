@@ -19,6 +19,7 @@ class Visitor(Protocol[ReturnType]):
   def visit_let_stmt(self, stmt: "Let") -> ReturnType: ...
   def visit_block_stmt(self, stmt: "Block") -> ReturnType: ...
   def visit_if_stmt(self, stmt: "If") -> ReturnType: ...
+  def visit_while_stmt(self, stmt: "While") -> ReturnType: ...
 
 
 class Expression(Stmt):
@@ -64,3 +65,12 @@ class If(Stmt):
 
   def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
     return visitor.visit_if_stmt(self)
+
+
+class While(Stmt):
+  def __init__(self, condition: Expr, body: Stmt):
+    self.condition = condition
+    self.body = body
+
+  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
+    return visitor.visit_while_stmt(self)
