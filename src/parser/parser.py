@@ -2,7 +2,7 @@ from logger.logger import Logger
 from parser.expr import (
   Assign, Binary, Expr, Grouping, Literal, Unary, Variable
 )
-from parser.stmt import Expression, Let, Print, Stmt
+from parser.stmt import Block, Expression, Let, Print, Stmt
 from scanner.token import Token
 from scanner.tokentype import TokenType
 from typing import List
@@ -49,6 +49,9 @@ class Parser:
     if self.match(TokenType.PRINT):
       return self._print_statement()
 
+    if self.match(TokenType.LEFT_BRACE):
+      return Block(self.block())
+
     return self._expression_statement()
 
 
@@ -62,6 +65,16 @@ class Parser:
     expr = self.expression()
     self.consume(TokenType.SEMICOLON, "Expect ';' after expression.")
     return Expression(expr)
+
+
+  def block(self) -> List[Stmt]:
+    statements: List[Stmt] = []
+
+    while not self.check(TokenType.RIGHT_BRACE) and not self.is_at_end():
+      statements.append(self.declaration())
+
+    self.consume(TokenType.RIGHT_BRACE, "Expect '}' after block.")
+    return statements
 
 
   def expression(self) -> Expr:
