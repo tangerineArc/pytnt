@@ -2,7 +2,7 @@ from interpreter.environment import Environment
 from errors.executionerror import ExecutionError
 from logger.logger import Logger
 from parser.expr import (
-  Assign, Binary, Expr, Grouping, Literal, Unary, Variable, Visitor as ExprVisitor
+  Assign, Binary, Expr, Grouping, Literal, Logical, Unary, Variable, Visitor as ExprVisitor
 )
 from parser.stmt import (
   Block, Expression, If, Let, Print, Stmt, Visitor as StmtVisitor
@@ -66,6 +66,19 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
 
   def visit_literal_expr(self, expr: Literal) -> Any:
     return expr.value
+
+
+  def visit_logical_expr(self, expr: Logical) -> Any:
+    left = self._evaluate(expr.left)
+
+    if expr.operator.type == TokenType.OR:
+      if self._is_truthy(left):
+        return left
+    else:
+      if not self._is_truthy(left):
+        return left
+
+    return self._evaluate(expr.right)
 
 
   def visit_grouping_expr(self, expr: Grouping) -> Any:
