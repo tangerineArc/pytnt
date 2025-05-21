@@ -52,12 +52,12 @@ def run(source: str):
   tokens = scanner.scan_tokens()
 
   parser = Parser(tokens)
-  expression = parser.parse()
+  statements = parser.parse()
 
-  if Logger.encountered_error or expression is None:
+  if Logger.encountered_error:
     return
 
-  interpreter.interpret(expression)
+  interpreter.interpret(statements)
 
 
 if __name__ == "__main__":
