@@ -1,6 +1,7 @@
 from interpreter.callable import Callable, FunctionObj
 from interpreter.environment import Environment
 from errors.executionerror import ExecutionError
+from errors.returntrickery import ReturnTrickery
 from logger.logger import Logger
 from natives.clock import ClockFn
 from parser.expr import (
@@ -8,7 +9,7 @@ from parser.expr import (
   Logical, Unary, Variable, Visitor as ExprVisitor
 )
 from parser.stmt import (
-  Block, Expression, Function, If, Let, Print,
+  Block, Expression, Function, If, Let, Print, Return,
   Stmt, Visitor as StmtVisitor, While
 )
 from scanner.token import Token
@@ -46,6 +47,14 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   def visit_print_stmt(self, stmt: Print):
     value = self._evaluate(stmt.expression)
     print(self._stringify(value))
+
+
+  def visit_return_stmt(self, stmt: Return):
+    value = None
+    if stmt.value is not None:
+      value = self._evaluate(stmt.value)
+
+    raise ReturnTrickery(value)
 
 
   def visit_block_stmt(self, stmt: Block):

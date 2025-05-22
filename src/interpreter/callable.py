@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from errors.returntrickery import ReturnTrickery
 from interpreter.environment import Environment
 from parser.stmt import Function
 from typing import List, TYPE_CHECKING
@@ -33,9 +34,10 @@ class FunctionObj(Callable):
         self.declaration.params[i].lexeme, arguments[i]
       )
 
-    interpreter.execute_block(self.declaration.body, environment)
-
-    return None
+    try:
+      interpreter.execute_block(self.declaration.body, environment)
+    except ReturnTrickery as e:
+      return e.value
 
 
   def arity(self) -> int:
