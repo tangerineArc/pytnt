@@ -20,6 +20,7 @@ class Visitor(Protocol[ReturnType]):
   def visit_block_stmt(self, stmt: "Block") -> ReturnType: ...
   def visit_if_stmt(self, stmt: "If") -> ReturnType: ...
   def visit_while_stmt(self, stmt: "While") -> ReturnType: ...
+  def visit_function_stmt(self, stmt: "Function") -> ReturnType: ...
 
 
 class Expression(Stmt):
@@ -53,6 +54,18 @@ class Block(Stmt):
 
   def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
     return visitor.visit_block_stmt(self)
+
+
+class Function(Stmt):
+  def __init__(
+    self, name: Token, params: List[Token], body: List[Stmt]
+  ):
+    self.name = name
+    self.params = params
+    self.body = body
+
+  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
+    return visitor.visit_function_stmt(self)
 
 
 class If(Stmt):
