@@ -1,4 +1,4 @@
-from interpreter.callable import Callable
+from interpreter.callable import Callable, FunctionObj
 from interpreter.environment import Environment
 from errors.executionerror import ExecutionError
 from logger.logger import Logger
@@ -8,7 +8,7 @@ from parser.expr import (
   Logical, Unary, Variable, Visitor as ExprVisitor
 )
 from parser.stmt import (
-  Block, Expression, If, Let, Print,
+  Block, Expression, Function, If, Let, Print,
   Stmt, Visitor as StmtVisitor, While
 )
 from scanner.token import Token
@@ -49,7 +49,7 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
 
 
   def visit_block_stmt(self, stmt: Block):
-    self._execute_block(stmt.statements, Environment(self.environment))
+    self.execute_block(stmt.statements, Environment(self.environment))
 
 
   def visit_let_stmt(self, stmt: Let):
@@ -135,6 +135,11 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
     return function.call(self, arguments)
 
 
+  def visit_function_stmt(self, stmt: Function):
+    function = FunctionObj(stmt)
+    self.environment.define(stmt.name.lexeme, function)
+
+
   def visit_binary_expr(self, expr: Binary) -> Any:
     left = self._evaluate(expr.left)
     right = self._evaluate(expr.right)
@@ -194,7 +199,7 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
     stmt.accept(self)
 
 
-  def _execute_block(self, statements: List[Stmt], environment: Environment):
+  def execute_block(self, statements: List[Stmt], environment: Environment):
     previous = self.environment
 
     try:
@@ -235,7 +240,7 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
         return TokenType.TRUE.value
       return TokenType.FALSE.value
 
-    return str(obj)
+    return obj.__repr__()
 
 
   def _check_number_operand(self, operator: Token, operand: Any):
