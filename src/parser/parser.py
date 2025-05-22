@@ -4,7 +4,7 @@ from parser.expr import (
   Literal, Logical, Unary, Variable
 )
 from parser.stmt import (
-  Block, Expression, Function, If, Let, Print, Stmt, While
+  Block, Expression, Function, If, Let, Print, Return, Stmt, While
 )
 from scanner.token import Token
 from scanner.tokentype import TokenType
@@ -101,6 +101,9 @@ class Parser:
     if self.match(TokenType.PRINT):
       return self._print_statement()
 
+    if self.match(TokenType.RETURN):
+      return self._return_statement()
+
     if self.match(TokenType.WHILE):
       return self._while_statement()
 
@@ -168,9 +171,23 @@ class Parser:
     return Print(value)
 
 
+  def _return_statement(self) -> Stmt:
+    keyword = self.previous()
+
+    value = None
+    if not self.check(TokenType.SEMICOLON):
+      value = self.expression()
+
+    self.consume(
+      TokenType.SEMICOLON, "Expect ';' after return value."
+    )
+    return Return(keyword, value)
+
+
   def _while_statement(self) -> Stmt:
     self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.")
     condition = self.expression()
+
     self.consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.")
     body = self.statement()
 
