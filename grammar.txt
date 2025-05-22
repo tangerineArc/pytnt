@@ -20,12 +20,19 @@ declaration   -> varDecl
 varDecl       -> "let" IDENTIFIER ( "=" expression )? ";" ;
 
 statement     -> exprStmt
+              |  forStmt
               |  ifStmt
               |  printStmt
               |  whileStmt
               |  block ;
 
 exprStmt      -> expression ";" ;
+
+forStmt       -> "for" "("
+                    ( varDecl | exprStmt | ";" )
+                    expression? ";"
+                    expression?
+                 ")" statement ;
 
 ifStmt        -> "if" "(" expression ")" statement
                ( "else" statement )? ;
@@ -53,8 +60,11 @@ term          -> factor ( ( "-" | "+" ) factor )* ;
 
 factor        -> unary ( ( "/" | "*" ) unary )* ;
 
-unary         -> ( "+" | "-" | "!" ) unary
-              |  primary ;
+unary         -> ( "+" | "-" | "!" ) unary | call ;
+
+call          -> primary ( "(" arguments? ")" )* ;
+
+arguments     -> expression ( "," expression )* ;
 
 primary       -> "true" | "false" | "void"
               |  NUMBER | STRING
