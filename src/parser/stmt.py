@@ -21,6 +21,7 @@ class Visitor(Protocol[ReturnType]):
   def visit_if_stmt(self, stmt: "If") -> ReturnType: ...
   def visit_while_stmt(self, stmt: "While") -> ReturnType: ...
   def visit_function_stmt(self, stmt: "Function") -> ReturnType: ...
+  def visit_return_stmt(self, stmt: "Return") -> ReturnType: ...
 
 
 class Expression(Stmt):
@@ -37,6 +38,15 @@ class Print(Stmt):
 
   def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
     return visitor.visit_print_stmt(self)
+
+
+class Return(Stmt):
+  def __init__(self, keyword: Token, value: Optional[Expr]):
+    self.keyword = keyword
+    self.value = value
+
+  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
+    return visitor.visit_return_stmt(self)
 
 
 class Let(Stmt):
