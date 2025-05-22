@@ -1,8 +1,11 @@
 from logger.logger import Logger
 from parser.expr import (
-  Assign, Binary, Expr, Grouping, Literal, Logical, Unary, Variable
+  Assign, Binary, Call, Expr, Grouping,
+  Literal, Logical, Unary, Variable
 )
-from parser.stmt import Block, Expression, If, Let, Print, Stmt, While
+from parser.stmt import (
+  Block, Expression, If, Let, Print, Stmt, While
+)
 from scanner.token import Token
 from scanner.tokentype import TokenType
 from typing import List
@@ -249,7 +252,19 @@ class Parser:
       right = self.unary()
       return Unary(operator, right)
 
-    return self.primary()
+    return self.call()
+
+
+  def call(self) -> Expr:
+    expr = self.primary()
+
+    while True:
+      if self.match(TokenType.LEFT_PAREN):
+        expr = self._finish_call(expr)
+      else:
+        break
+
+    return expr
 
 
   def primary(self) -> Expr:
@@ -268,7 +283,9 @@ class Parser:
 
     if self.match(TokenType.LEFT_PAREN):
       expr = self.expression()
-      self.consume(TokenType.RIGHT_PAREN, "Expect ')' after expression")
+      self.consume(
+        TokenType.RIGHT_PAREN, "Expect ')' after expression"
+      )
       return Grouping(expr)
 
     Logger.error(self.peek(), "Expect expression.")
@@ -346,6 +363,24 @@ class Parser:
 
     Logger.error(self.peek(), message)
     raise ParseError
+
+
+  def _finish_call(self, callee: Expr) -> Expr:
+    arguments: List[Expr] = []
+    if not self.check(TokenType.RIGHT_PAREN):
+      arguments.append(self.expression())
+
+      while self.match(TokenType.COMMA):
+        if len(arguments) >= 255:
+          Logger.error(self.peek(), "Can't have more than 255 arguments.")
+          # raise ParseError # no throwing errors again
+
+        arguments.append(self.expression())
+
+    paren = self.consume(
+      TokenType.RIGHT_PAREN, "Expect ')' after arguments."
+    )
+    return Call(callee, paren, arguments)
 
 
 class ParseError(RuntimeError):
