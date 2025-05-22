@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from scanner.token import Token
-from typing import Protocol, TypeVar, Union
+from typing import List, Protocol, TypeVar, Union
 
 
 ReturnType = TypeVar("ReturnType", covariant = True)
@@ -20,6 +20,7 @@ class Visitor(Protocol[ReturnType]):
   def visit_variable_expr(self, expr: "Variable") -> ReturnType: ...
   def visit_assign_expr(self, expr: "Assign") -> ReturnType: ...
   def visit_logical_expr(self, expr: "Logical") -> ReturnType: ...
+  def visit_calL_expr(self, expr: "Call") -> ReturnType: ...
 
 
 class Binary(Expr):
@@ -38,6 +39,16 @@ class Grouping(Expr):
 
   def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
     return visitor.visit_grouping_expr(self)
+
+
+class Call(Expr):
+  def __init__(self, callee: Expr, paren: Token, arguments: List[Expr]):
+    self.callee = callee
+    self.paren = paren
+    self.arguments = arguments
+
+  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
+    return visitor.visit_calL_expr(self)
 
 
 class Literal(Expr):
