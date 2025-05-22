@@ -15,5 +15,5 @@ class ClockFn(Callable):
   ) -> float:
     return time()
 
-  def to_string(self) -> str:
+  def __repr__(self) -> str:
     return "<native function>"
