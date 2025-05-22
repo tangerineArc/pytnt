@@ -14,8 +14,15 @@
 
 program       -> declaration* EOF ;
 
-declaration   -> varDecl
+declaration   -> funcDecl
+              |  varDecl
               |  statement ;
+
+funcDecl      -> "function" function ;
+
+function      -> IDENTIFIER "(" parameters? ")" block ;
+
+parameters    -> IDENTIFIER ( "," IDENTIFIER )* ;
 
 varDecl       -> "let" IDENTIFIER ( "=" expression )? ";" ;
 
