@@ -4,7 +4,7 @@ from parser.expr import (
   Literal, Logical, Unary, Variable
 )
 from parser.stmt import (
-  Block, Expression, If, Let, Print, Stmt, While
+  Block, Expression, Function, If, Let, Print, Stmt, While
 )
 from scanner.token import Token
 from scanner.tokentype import TokenType
@@ -27,6 +27,9 @@ class Parser:
 
   def declaration(self) -> Stmt:
     try:
+      if self.match(TokenType.FUNCTION):
+        return self._function("function")
+
       if self.match(TokenType.LET):
         return self._var_declaration()
 
@@ -34,6 +37,40 @@ class Parser:
     except ParseError:
       self.synchronize()
       ... # return something
+
+
+  def _function(self, kind: str) -> Function:
+    name = self.consume(TokenType.IDENTIFIER, f"Expect {kind} name.")
+    self.consume(TokenType.LEFT_PAREN, f"Expect '(' after {kind} name.")
+
+    parameters: List[Token] = []
+    if not self.check(TokenType.RIGHT_PAREN):
+      parameters.append(
+        self.consume(TokenType.IDENTIFIER, "Expect parameter name.")
+      )
+
+      while self.match(TokenType.COMMA):
+        if len(parameters) >= 255:
+          Logger.error(
+            self.peek(), "Can't have more than 255 parameters."
+          )
+          # raise ParseError() no throwing errors here
+
+        parameters.append(
+          self.consume(
+            TokenType.IDENTIFIER, "Expect parameter name."
+          )
+        )
+    self.consume(
+      TokenType.RIGHT_PAREN, "Expect ')' after parameters."
+    )
+
+    self.consume(
+      TokenType.LEFT_BRACE, f"Expect '{{' before {kind} body."
+    )
+    body = self.block()
+
+    return Function(name, parameters, body)
 
 
   def _var_declaration(self) -> Stmt:
