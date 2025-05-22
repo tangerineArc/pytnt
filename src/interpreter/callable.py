@@ -21,14 +21,15 @@ class Callable(ABC):
 
 
 class FunctionObj(Callable):
-  def __init__(self, declaration: Function):
+  def __init__(self, declaration: Function, closure: Environment):
     self.declaration = declaration
+    self.closure = closure
 
 
   def call(
     self, interpreter: "Interpreter", arguments: List[object]
   ) -> object:
-    environment = Environment(interpreter.universe)
+    environment = Environment(self.closure)
     for i in range(len(self.declaration.params)):
       environment.define(
         self.declaration.params[i].lexeme, arguments[i]

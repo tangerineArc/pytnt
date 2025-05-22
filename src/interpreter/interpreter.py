@@ -145,7 +145,7 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
 
 
   def visit_function_stmt(self, stmt: Function):
-    function = FunctionObj(stmt)
+    function = FunctionObj(stmt, self.environment)
     self.environment.define(stmt.name.lexeme, function)
 
 
