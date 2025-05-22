@@ -1,11 +1,15 @@
+from interpreter.callable import Callable
 from interpreter.environment import Environment
 from errors.executionerror import ExecutionError
 from logger.logger import Logger
+from natives.clock import ClockFn
 from parser.expr import (
-  Assign, Binary, Expr, Grouping, Literal, Logical, Unary, Variable, Visitor as ExprVisitor
+  Assign, Binary, Call, Expr, Grouping, Literal,
+  Logical, Unary, Variable, Visitor as ExprVisitor
 )
 from parser.stmt import (
-  Block, Expression, If, Let, Print, Stmt, Visitor as StmtVisitor, While
+  Block, Expression, If, Let, Print,
+  Stmt, Visitor as StmtVisitor, While
 )
 from scanner.token import Token
 from scanner.tokentype import TokenType
@@ -14,7 +18,10 @@ from typing import Any, List
 
 class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   def __init__(self):
-    self.environment = Environment()
+    self.universe = Environment()
+    self.environment = self.universe
+
+    self.universe.define("clock", ClockFn())
 
 
   def interpret(self, statements: List[Stmt]):
@@ -104,6 +111,28 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
         return not self._is_truthy(right)
       case _: # unreachable
         return
+
+
+  def visit_calL_expr(self, expr: Call) -> Any:
+    callee = self._evaluate(expr.callee)
+
+    arguments: List[object] = []
+    for argument in expr.arguments:
+      arguments.append(self._evaluate(argument))
+
+    if not isinstance(callee, Callable):
+      raise ExecutionError(
+        expr.paren, "Can only call functions and classes."
+      )
+
+    function = callee # type cast
+    if len(arguments) != function.arity():
+      raise ExecutionError(
+        expr.paren,
+        f"Expected {function.arity()} arguments but got {len(arguments)}."
+      )
+
+    return function.call(self, arguments)
 
 
   def visit_binary_expr(self, expr: Binary) -> Any:
