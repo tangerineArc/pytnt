@@ -14,13 +14,14 @@ from parser.stmt import (
 )
 from scanner.token import Token
 from scanner.tokentype import TokenType
-from typing import Any, List
+from typing import Any, Dict, List
 
 
 class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   def __init__(self):
     self.universe = Environment()
     self.environment = self.universe
+    self.locals: Dict[Expr, int] = {}
 
     self.universe.define("clock", ClockFn())
 
@@ -63,7 +64,7 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
 
   def visit_let_stmt(self, stmt: Let):
     value = None
-    if stmt.initializer != None:
+    if stmt.initializer is not None:
       value = self._evaluate(stmt.initializer)
 
     self.environment.define(stmt.name.lexeme, value)
@@ -74,13 +75,14 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
       self._execute(stmt.body)
 
 
-  def visit_variable_expr(self, expr: Variable) -> Any:
-    return self.environment.get(expr.name)
-
-
   def visit_assign_expr(self, expr: Assign) -> Any:
     value = self._evaluate(expr.value)
-    self.environment.assign(expr.name, value)
+
+    distance = self.locals.get(expr)
+    if distance is not None:
+      self.environment.assign_at(distance, expr.name, value)
+    else:
+      self.universe.assign(expr.name, value)
 
     return value
 
@@ -204,11 +206,29 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
         return
 
 
+  def visit_variable_expr(self, expr: Variable) -> Any:
+    return self._look_up_variable(expr.name, expr)
+
+
+  def _look_up_variable(self, name: Token, expr: Expr) -> object:
+    distance = self.locals.get(expr)
+    if distance is not None:
+      return self.environment.get_at(distance, name.lexeme)
+
+    return self.universe.get(name)
+
+
   def _execute(self, stmt: Stmt):
     stmt.accept(self)
 
 
-  def execute_block(self, statements: List[Stmt], environment: Environment):
+  def resolve(self, expr: Expr, depth: int):
+    self.locals[expr] = depth
+
+
+  def execute_block(
+    self, statements: List[Stmt], environment: Environment
+  ):
     previous = self.environment
 
     try:
@@ -259,7 +279,9 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
     raise ExecutionError(operator, "Operand must be a number.")
 
 
-  def _check_number_operands(self, operator: Token, left: Any, right: Any):
+  def _check_number_operands(
+    self, operator: Token, left: Any, right: Any
+  ):
     if isinstance(left, float) and isinstance(right, float):
       return
 
