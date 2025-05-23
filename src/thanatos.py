@@ -2,6 +2,7 @@ from interpreter.interpreter import Interpreter
 from logger.logger import Logger
 from logger.repl import Repl
 from parser.parser import Parser
+from resolver.resolver import Resolver
 from scanner.scanner import Scanner
 from sys import argv, exit
 # from tools.astprinter import AstPrinter
@@ -53,6 +54,12 @@ def run(source: str):
 
   parser = Parser(tokens)
   statements = parser.parse()
+
+  if Logger.encountered_error:
+    return
+
+  resolver = Resolver(interpreter)
+  resolver.resolve(statements)
 
   if Logger.encountered_error:
     return
