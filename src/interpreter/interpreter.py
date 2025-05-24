@@ -1,15 +1,16 @@
-from interpreter.callable import Callable, FunctionObj
+from interpreter.callable import Callable, ClassObj, FunctionObj
 from interpreter.environment import Environment
+from interpreter.instance import Instance
 from errors.executionerror import ExecutionError
 from errors.returntrickery import ReturnTrickery
 from logger.logger import Logger
 from natives.clock import ClockFn
 from parser.expr import (
-  Assign, Binary, Call, Expr, Grouping, Literal,
-  Logical, Unary, Variable, Visitor as ExprVisitor
+  Assign, Binary, Call, Expr, Get, Grouping, Literal,
+  Logical, Set, This, Unary, Variable, Visitor as ExprVisitor
 )
 from parser.stmt import (
-  Block, Expression, Function, If, Let, Print, Return,
+  Block, Class, Expression, Function, If, Let, Print, Return,
   Stmt, Visitor as StmtVisitor, While
 )
 from scanner.token import Token
@@ -34,8 +35,31 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
       Logger.execution_error(e)
 
 
+  def visit_block_stmt(self, stmt: Block):
+    self.execute_block(stmt.statements, Environment(self.environment))
+
+
+  def visit_class_stmt(self, stmt: Class):
+    self.environment.define(stmt.name.lexeme, None)
+
+    methods: Dict[str, FunctionObj] = {}
+    for method in stmt.methods:
+      function = FunctionObj(
+        method, self.environment, method.name.lexeme == "construct"
+      )
+      methods[method.name.lexeme] = function
+
+    class_obj = ClassObj(stmt.name.lexeme, methods)
+    self.environment.assign(stmt.name, class_obj)
+
+
   def visit_expression_stmt(self, stmt: Expression):
     self._evaluate(stmt.expression)
+
+
+  def visit_function_stmt(self, stmt: Function):
+    function = FunctionObj(stmt, self.environment, False)
+    self.environment.define(stmt.name.lexeme, function)
 
 
   def visit_if_stmt(self, stmt: If):
@@ -43,6 +67,14 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
       self._execute(stmt.then_branch)
     elif stmt.else_branch != None:
       self._execute(stmt.else_branch)
+
+
+  def visit_let_stmt(self, stmt: Let):
+    value = None
+    if stmt.initializer is not None:
+      value = self._evaluate(stmt.initializer)
+
+    self.environment.define(stmt.name.lexeme, value)
 
 
   def visit_print_stmt(self, stmt: Print):
@@ -56,18 +88,6 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
       value = self._evaluate(stmt.value)
 
     raise ReturnTrickery(value)
-
-
-  def visit_block_stmt(self, stmt: Block):
-    self.execute_block(stmt.statements, Environment(self.environment))
-
-
-  def visit_let_stmt(self, stmt: Let):
-    value = None
-    if stmt.initializer is not None:
-      value = self._evaluate(stmt.initializer)
-
-    self.environment.define(stmt.name.lexeme, value)
 
 
   def visit_while_stmt(self, stmt: While):
@@ -85,70 +105,6 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
       self.universe.assign(expr.name, value)
 
     return value
-
-
-  def visit_literal_expr(self, expr: Literal) -> Any:
-    return expr.value
-
-
-  def visit_logical_expr(self, expr: Logical) -> Any:
-    left = self._evaluate(expr.left)
-
-    if expr.operator.type == TokenType.OR:
-      if self._is_truthy(left):
-        return left
-    else:
-      if not self._is_truthy(left):
-        return left
-
-    return self._evaluate(expr.right)
-
-
-  def visit_grouping_expr(self, expr: Grouping) -> Any:
-    return self._evaluate(expr.expression)
-
-
-  def visit_unary_expr(self, expr: Unary) -> Any:
-    right = self._evaluate(expr.right)
-
-    match expr.operator.type:
-      case TokenType.MINUS:
-        self._check_number_operand(expr.operator, right)
-        return -float(right)
-      case TokenType.PLUS:
-        self._check_number_operand(expr.operator, right)
-        return +float(right)
-      case TokenType.BANG:
-        return not self._is_truthy(right)
-      case _: # unreachable
-        return
-
-
-  def visit_calL_expr(self, expr: Call) -> Any:
-    callee = self._evaluate(expr.callee)
-
-    arguments: List[object] = []
-    for argument in expr.arguments:
-      arguments.append(self._evaluate(argument))
-
-    if not isinstance(callee, Callable):
-      raise ExecutionError(
-        expr.paren, "Can only call functions and classes."
-      )
-
-    function = callee # type cast
-    if len(arguments) != function.arity():
-      raise ExecutionError(
-        expr.paren,
-        f"Expected {function.arity()} arguments but got {len(arguments)}."
-      )
-
-    return function.call(self, arguments)
-
-
-  def visit_function_stmt(self, stmt: Function):
-    function = FunctionObj(stmt, self.environment)
-    self.environment.define(stmt.name.lexeme, function)
 
 
   def visit_binary_expr(self, expr: Binary) -> Any:
@@ -202,6 +158,91 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
         self._check_number_operands(expr.operator, left, right)
         return float(left) * float(right)
 
+      case _: # unreachable
+        return
+
+
+  def visit_calL_expr(self, expr: Call) -> Any:
+    callee = self._evaluate(expr.callee)
+
+    arguments: List[object] = []
+    for argument in expr.arguments:
+      arguments.append(self._evaluate(argument))
+
+    if not isinstance(callee, Callable):
+      raise ExecutionError(
+        expr.paren, "Can only call functions and classes."
+      )
+
+    function = callee # type cast
+    if len(arguments) != function.arity():
+      raise ExecutionError(
+        expr.paren,
+        f"Expected {function.arity()} arguments but got {len(arguments)}."
+      )
+
+    return function.call(self, arguments)
+
+
+  def visit_get_expr(self, expr: Get) -> Any:
+    obj = self._evaluate(expr.obj)
+    if isinstance(obj, Instance):
+      return obj.get(expr.name)
+
+    raise ExecutionError(
+      expr.name, "Only instances have properties."
+    )
+
+
+  def visit_grouping_expr(self, expr: Grouping) -> Any:
+    return self._evaluate(expr.expression)
+
+
+  def visit_literal_expr(self, expr: Literal) -> Any:
+    return expr.value
+
+
+  def visit_logical_expr(self, expr: Logical) -> Any:
+    left = self._evaluate(expr.left)
+
+    if expr.operator.type == TokenType.OR:
+      if self._is_truthy(left):
+        return left
+    else:
+      if not self._is_truthy(left):
+        return left
+
+    return self._evaluate(expr.right)
+
+
+  def visit_set_expr(self, expr: Set) -> Any:
+    obj = self._evaluate(expr.obj)
+
+    if not isinstance(obj, Instance):
+      raise ExecutionError(expr.name, "Only instances have fields.")
+
+    value = self._evaluate(expr.value)
+    obj.set(expr.name, value)
+
+    return value
+
+
+  def visit_this_expr(self, expr: This) -> Any:
+    return self._look_up_variable(expr.keyword, expr)
+
+
+  def visit_unary_expr(self, expr: Unary) -> Any:
+    right = self._evaluate(expr.right)
+
+    match expr.operator.type:
+      case TokenType.MINUS:
+        self._check_number_operand(expr.operator, right)
+        return -float(right)
+      case TokenType.PLUS:
+        self._check_number_operand(expr.operator, right)
+        return +float(right)
+      case TokenType.BANG:
+        return not self._is_truthy(right)
       case _: # unreachable
         return
 
