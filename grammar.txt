@@ -80,7 +80,6 @@ call          -> primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
 
 arguments     -> expression ( "," expression )* ;
 
-primary       -> "true" | "false" | "void"
-              |  NUMBER | STRING
-              |  "(" expression ")"
-              |  IDENTIFIER ;
+primary       -> "true" | "false" | "void" | "this"
+              |  NUMBER | STRING | IDENTIFIER | "(" expression ")"
+              |  "super" "." IDENTIFIER ;
