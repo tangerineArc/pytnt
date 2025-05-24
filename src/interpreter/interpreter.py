@@ -40,6 +40,15 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
 
 
   def visit_class_stmt(self, stmt: Class):
+    super_class = None
+    if stmt.super_class is not None:
+      super_class = self._evaluate(stmt.super_class)
+
+      if not isinstance(super_class, ClassObj):
+        raise ExecutionError(
+          stmt.super_class.name, "Superclass must be a class."
+        )
+
     self.environment.define(stmt.name.lexeme, None)
 
     methods: Dict[str, FunctionObj] = {}
@@ -49,7 +58,8 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
       )
       methods[method.name.lexeme] = function
 
-    class_obj = ClassObj(stmt.name.lexeme, methods)
+    class_obj = ClassObj(stmt.name.lexeme, super_class, methods)
+
     self.environment.assign(stmt.name, class_obj)
 
 
