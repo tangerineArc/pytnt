@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from parser.expr import Expr
+from parser.expr import Expr, Variable
 from scanner.token import Token
 from typing import List, Optional, Protocol, TypeVar
 
@@ -22,6 +22,7 @@ class Visitor(Protocol[ReturnType]):
   def visit_while_stmt(self, stmt: "While") -> ReturnType: ...
   def visit_function_stmt(self, stmt: "Function") -> ReturnType: ...
   def visit_return_stmt(self, stmt: "Return") -> ReturnType: ...
+  def visit_class_stmt(self, stmt: "Class") -> ReturnType: ...
 
 
 class Expression(Stmt):
@@ -64,6 +65,21 @@ class Block(Stmt):
 
   def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
     return visitor.visit_block_stmt(self)
+
+
+class Class(Stmt):
+  def __init__(
+    self,
+    name: Token,
+    super_class: Optional[Variable],
+    methods: List["Function"]
+  ):
+    self.name = name
+    self.super_class = super_class
+    self.methods = methods
+
+  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
+    return visitor.visit_class_stmt(self)
 
 
 class Function(Stmt):
