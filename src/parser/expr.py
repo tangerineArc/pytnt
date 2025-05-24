@@ -24,6 +24,7 @@ class Visitor(Protocol[ReturnType]):
   def visit_get_expr(self, expr: "Get") -> ReturnType: ...
   def visit_set_expr(self, expr: "Set") -> ReturnType: ...
   def visit_this_expr(self, expr: "This") -> ReturnType: ...
+  def visit_super_expr(self, expr: "Super") -> ReturnType: ...
 
 
 class Assign(Expr):
@@ -98,6 +99,15 @@ class Set(Expr):
 
   def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
     return visitor.visit_set_expr(self)
+
+
+class Super(Expr):
+  def __init__(self, keyword: Token, method: Token):
+    self.keyword = keyword
+    self.method = method
+
+  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
+    return visitor.visit_super_expr(self)
 
 
 class This(Expr):
