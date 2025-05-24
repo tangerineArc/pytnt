@@ -3,7 +3,7 @@ from interpreter.interpreter import Interpreter
 from logger.logger import Logger
 from parser.expr import (
   Assign, Binary, Call, Expr, Get, Grouping, Literal,
-  Logical, Set, This, Unary, Variable, Visitor as ExprVisitor
+  Logical, Set, Super, This, Unary, Variable, Visitor as ExprVisitor
 )
 from parser.stmt import (
   Block, Class, Expression, Function, If, Let, Print,
@@ -16,6 +16,7 @@ from typing import cast, Dict, List
 class ClassType(Enum):
   NONE = auto()
   CLASS = auto()
+  SUBCLASS = auto()
 
 
 class FunctionType(Enum):
@@ -57,7 +58,12 @@ class Resolver(ExprVisitor[None], StmtVisitor[None]):
       )
 
     if stmt.super_class is not None:
+      self.current_class = ClassType.SUBCLASS
       self.resolve(stmt.super_class)
+
+    if stmt.super_class is not None:
+      self._begin_scope()
+      self.scopes[-1]["super"] = True
 
     self._begin_scope()
     self.scopes[-1]["this"] = True
@@ -70,6 +76,9 @@ class Resolver(ExprVisitor[None], StmtVisitor[None]):
       self._resolve_function(method, declaration)
 
     self._end_scope()
+
+    if stmt.super_class is not None:
+      self._end_scope()
 
     self.current_class = enclosing_class
 
@@ -163,6 +172,20 @@ class Resolver(ExprVisitor[None], StmtVisitor[None]):
   def visit_set_expr(self, expr: Set):
     self.resolve(expr.value)
     self.resolve(expr.obj)
+
+
+  def visit_super_expr(self, expr: Super):
+    if self.current_class == ClassType.NONE:
+      Logger.error(
+        expr.keyword, "Can't use 'super' outside of a class."
+      )
+    elif self.current_class != ClassType.SUBCLASS:
+      Logger.error(
+        expr.keyword,
+        "Can't use 'super' in a class with no superclass."
+      )
+
+    self._resolve_local(expr, expr.keyword)
 
 
   def visit_this_expr(self, expr: This):
