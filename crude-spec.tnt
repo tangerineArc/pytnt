@@ -1,5 +1,4 @@
-// Your first lox program! This is how comments are done.
-// to-do: add support fot /* block comments */
+// to-do: add support for /* block comments */
 
 // to-do: fix REPL
 
