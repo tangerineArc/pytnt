@@ -22,8 +22,14 @@ class Callable(ABC):
 
 
 class ClassObj(Callable):
-  def __init__(self, name: str, methods: Dict[str, "FunctionObj"]):
+  def __init__(
+    self,
+    name: str,
+    super_class: Optional["ClassObj"],
+    methods: Dict[str, "FunctionObj"]
+  ):
     self.name = name
+    self.super_class = super_class
     self.methods = methods
 
 
@@ -48,7 +54,11 @@ class ClassObj(Callable):
 
 
   def find_method(self, name: str) -> Optional["FunctionObj"]:
-    return self.methods.get(name)
+    if name in self.methods:
+      return self.methods[name]
+
+    if self.super_class is not None:
+      return self.super_class.find_method(name)
 
 
   def __repr__(self) -> str:
