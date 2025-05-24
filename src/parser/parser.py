@@ -1,7 +1,7 @@
 from logger.logger import Logger
 from parser.expr import (
-  Assign, Binary, Call, Expr, Get, Grouping,
-  Literal, Logical, Set, This, Unary, Variable
+  Assign, Binary, Call, Expr, Get, Grouping, Literal,
+  Logical, Set, Super, This, Unary, Variable
 )
 from parser.stmt import (
   Block, Class, Expression, Function,
@@ -26,7 +26,7 @@ class Parser:
     return statements
 
 
-  def declaration(self) -> Stmt:
+  def declaration(self) -> Stmt: # type: ignore
     try:
       if self.match(TokenType.CLASS):
         return self._class_declaration()
@@ -40,7 +40,6 @@ class Parser:
       return self.statement()
     except ParseError:
       self.synchronize()
-      ... # return something
 
 
   def _function(self, kind: str) -> Function:
@@ -366,6 +365,15 @@ class Parser:
 
     if self.match(TokenType.NUMBER, TokenType.STRING):
       return Literal(self.previous().literal)
+
+    if self.match(TokenType.SUPER):
+      keyword = self.previous()
+      self.consume(TokenType.DOT, "Expect '.' after 'super'.")
+
+      method = self.consume(
+        TokenType.IDENTIFIER, "Expect superclass method name."
+      )
+      return Super(keyword, method)
 
     if self.match(TokenType.THIS):
       return This(self.previous())
