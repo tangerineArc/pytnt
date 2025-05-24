@@ -21,6 +21,18 @@ class Visitor(Protocol[ReturnType]):
   def visit_assign_expr(self, expr: "Assign") -> ReturnType: ...
   def visit_logical_expr(self, expr: "Logical") -> ReturnType: ...
   def visit_calL_expr(self, expr: "Call") -> ReturnType: ...
+  def visit_get_expr(self, expr: "Get") -> ReturnType: ...
+  def visit_set_expr(self, expr: "Set") -> ReturnType: ...
+  def visit_this_expr(self, expr: "This") -> ReturnType: ...
+
+
+class Assign(Expr):
+  def __init__(self, name: Token, value: Expr):
+    self.name = name
+    self.value = value
+
+  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
+    return visitor.visit_assign_expr(self)
 
 
 class Binary(Expr):
@@ -33,14 +45,6 @@ class Binary(Expr):
     return visitor.visit_binary_expr(self)
 
 
-class Grouping(Expr):
-  def __init__(self, expression: Expr):
-    self.expression = expression
-
-  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
-    return visitor.visit_grouping_expr(self)
-
-
 class Call(Expr):
   def __init__(self, callee: Expr, paren: Token, arguments: List[Expr]):
     self.callee = callee
@@ -49,6 +53,23 @@ class Call(Expr):
 
   def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
     return visitor.visit_calL_expr(self)
+
+
+class Get(Expr):
+  def __init__(self, obj: Expr, name: Token):
+    self.obj = obj
+    self.name = name
+
+  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
+    return visitor.visit_get_expr(self)
+
+
+class Grouping(Expr):
+  def __init__(self, expression: Expr):
+    self.expression = expression
+
+  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
+    return visitor.visit_grouping_expr(self)
 
 
 class Literal(Expr):
@@ -69,6 +90,24 @@ class Logical(Expr):
     return visitor.visit_logical_expr(self)
 
 
+class Set(Expr):
+  def __init__(self, obj: Expr, name: Token, value: Expr):
+    self.obj = obj
+    self.name = name
+    self.value = value
+
+  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
+    return visitor.visit_set_expr(self)
+
+
+class This(Expr):
+  def __init__(self, keyword: Token):
+    self.keyword = keyword
+
+  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
+    return visitor.visit_this_expr(self)
+
+
 class Unary(Expr):
   def __init__(self, operator: Token, right: Expr):
     self.operator = operator
@@ -84,12 +123,3 @@ class Variable(Expr):
 
   def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
     return visitor.visit_variable_expr(self)
-
-
-class Assign(Expr):
-  def __init__(self, name: Token, value: Expr):
-    self.name = name
-    self.value = value
-
-  def accept(self, visitor: Visitor[ReturnType]) -> ReturnType:
-    return visitor.visit_assign_expr(self)
