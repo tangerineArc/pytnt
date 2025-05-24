@@ -7,7 +7,7 @@ from logger.logger import Logger
 from natives.clock import ClockFn
 from parser.expr import (
   Assign, Binary, Call, Expr, Get, Grouping, Literal,
-  Logical, Set, This, Unary, Variable, Visitor as ExprVisitor
+  Logical, Set, Super, This, Unary, Variable, Visitor as ExprVisitor
 )
 from parser.stmt import (
   Block, Class, Expression, Function, If, Let, Print, Return,
@@ -15,13 +15,13 @@ from parser.stmt import (
 )
 from scanner.token import Token
 from scanner.tokentype import TokenType
-from typing import Any, Dict, List
+from typing import Any, cast, Dict, List
 
 
 class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   def __init__(self):
     self.universe = Environment()
-    self.environment = self.universe
+    self.environment: Environment = self.universe
     self.locals: Dict[Expr, int] = {}
 
     self.universe.define("clock", ClockFn())
@@ -51,6 +51,10 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
 
     self.environment.define(stmt.name.lexeme, None)
 
+    if stmt.super_class is not None:
+      self.environment = Environment(self.environment)
+      self.environment.define("super", super_class)
+
     methods: Dict[str, FunctionObj] = {}
     for method in stmt.methods:
       function = FunctionObj(
@@ -59,6 +63,9 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
       methods[method.name.lexeme] = function
 
     class_obj = ClassObj(stmt.name.lexeme, super_class, methods)
+
+    if super_class is not None:
+      self.environment = self.environment.enclosing # type: ignore
 
     self.environment.assign(stmt.name, class_obj)
 
@@ -235,6 +242,26 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
     obj.set(expr.name, value)
 
     return value
+
+
+  def visit_super_expr(self, expr: Super) -> Any:
+    distance = self.locals[expr]
+    super_class = cast(
+      ClassObj, self.environment.get_at(distance, "super")
+    )
+
+    obj = cast(
+      Instance, self.environment.get_at(distance - 1, "this")
+    )
+
+    method = super_class.find_method(expr.method.lexeme)
+
+    if method is None:
+      raise ExecutionError(
+        expr.method, f"Undefined property '{expr.method.lexeme}'."
+      )
+
+    return method.bind(obj)
 
 
   def visit_this_expr(self, expr: This) -> Any:

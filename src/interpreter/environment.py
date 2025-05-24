@@ -24,7 +24,7 @@ class Environment:
 
 
   def get_at(self, distance: int, name: str) -> object:
-    return self.ancestor(distance).values.get(name, None)
+    return self.ancestor(distance).values.get(name)
 
 
   def assign(self, name: Token, value: object):
