@@ -2,20 +2,27 @@ from enum import auto, Enum
 from interpreter.interpreter import Interpreter
 from logger.logger import Logger
 from parser.expr import (
-  Assign, Binary, Call, Expr, Grouping, Literal,
-  Logical, Unary, Variable, Visitor as ExprVisitor
+  Assign, Binary, Call, Expr, Get, Grouping, Literal,
+  Logical, Set, This, Unary, Variable, Visitor as ExprVisitor
 )
 from parser.stmt import (
-  Block, Expression, Function, If, Let, Print,
+  Block, Class, Expression, Function, If, Let, Print,
   Return, Stmt, Visitor as StmtVisitor, While
 )
 from scanner.token import Token
 from typing import cast, Dict, List
 
 
+class ClassType(Enum):
+  NONE = auto()
+  CLASS = auto()
+
+
 class FunctionType(Enum):
   NONE = auto()
   FUNCTION = auto()
+  INITIALIZER = auto()
+  METHOD = auto()
 
 
 class Resolver(ExprVisitor[None], StmtVisitor[None]):
@@ -23,13 +30,37 @@ class Resolver(ExprVisitor[None], StmtVisitor[None]):
     self.interpreter = interpreter
     # stack of local scopes only
     self.scopes: List[Dict[str, bool]] = []
+
     self.current_function = FunctionType.NONE
+    self.current_class = ClassType.NONE
 
 
   def visit_block_stmt(self, stmt: Block):
     self._begin_scope()
     self.resolve(stmt.statements)
     self._end_scope()
+
+
+  def visit_class_stmt(self, stmt: Class):
+    enclosing_class = self.current_class
+    self.current_class = ClassType.CLASS
+
+    self._declare(stmt.name)
+    self._define(stmt.name)
+
+    self._begin_scope()
+    self.scopes[-1]["this"] = True
+
+    for method in stmt.methods:
+      declaration = FunctionType.METHOD
+      if method.name.lexeme == "construct":
+        declaration = FunctionType.INITIALIZER
+
+      self._resolve_function(method, declaration)
+
+    self._end_scope()
+
+    self.current_class = enclosing_class
 
 
   def visit_expression_stmt(self, stmt: Expression):
@@ -71,6 +102,11 @@ class Resolver(ExprVisitor[None], StmtVisitor[None]):
       )
 
     if stmt.value is not None:
+      if self.current_function == FunctionType.INITIALIZER:
+        Logger.error(
+          stmt.keyword, "Can't return a value from an initializer."
+        )
+
       self.resolve(stmt.value)
 
 
@@ -96,6 +132,10 @@ class Resolver(ExprVisitor[None], StmtVisitor[None]):
       self.resolve(argument)
 
 
+  def visit_get_expr(self, expr: Get):
+    self.resolve(expr.obj)
+
+
   def visit_grouping_expr(self, expr: Grouping):
     self.resolve(expr.expression)
 
@@ -107,6 +147,21 @@ class Resolver(ExprVisitor[None], StmtVisitor[None]):
   def visit_logical_expr(self, expr: Logical):
     self.resolve(expr.left)
     self.resolve(expr.right)
+
+
+  def visit_set_expr(self, expr: Set):
+    self.resolve(expr.value)
+    self.resolve(expr.obj)
+
+
+  def visit_this_expr(self, expr: This):
+    if self.current_class == ClassType.NONE:
+      Logger.error(
+        expr.keyword, "Can't use 'this' outside of a class."
+      )
+      return
+
+    self._resolve_local(expr, expr.keyword)
 
 
   def visit_unary_expr(self, expr: Unary):
